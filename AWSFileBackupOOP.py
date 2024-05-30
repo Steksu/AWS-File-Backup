@@ -1,4 +1,4 @@
-from tkinter import filedialog, StringVar, TOP
+from tkinter import filedialog, StringVar
 import customtkinter as ctk
 from tkinterdnd2 import TkinterDnD, DND_ALL
 from CTkListbox import *
