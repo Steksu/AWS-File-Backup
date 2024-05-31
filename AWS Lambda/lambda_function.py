@@ -15,27 +15,22 @@ s3 = boto3.resource('s3')
 def lambda_handler(event, context):
     logger.info("New files uploaded to the source bucket.")
     
-    # URL decode the key to handle spaces and special characters correctly
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'])
     
     source_bucket = event['Records'][0]['s3']['bucket']['name']
     destination_bucket = os.environ['destination_bucket']
     
     try:
-        # Download the file from the source bucket
         source_obj = s3.Object(source_bucket, key)
         file_content = source_obj.get()['Body'].read()
 
-        # Compress the file content
         compressed_file = io.BytesIO()
         with gzip.GzipFile(fileobj=compressed_file, mode='wb') as gz:
             gz.write(file_content)
         compressed_file.seek(0)
 
-        # Define the key for the compressed file
         compressed_key = key + '.gz'
 
-        # Upload the compressed file to the destination bucket
         s3.Bucket(destination_bucket).put_object(Key=compressed_key, Body=compressed_file)
 
         logger.info("File compressed and copied to the destination bucket successfully!")
