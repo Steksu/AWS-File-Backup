@@ -7,6 +7,8 @@ import boto3
 import botocore
 import os
 import threading
+import keyring
+import configparser
 
 class Tk(ctk.CTk, TkinterDnD.DnDWrapper):
 
@@ -211,17 +213,48 @@ class KeyValidation(ctk.CTk, TkinterDnD.DnDWrapper):
         self.geometry("800x600")
         self.title("AWS File Manager")
 
+        self.config_file = "app_config.ini"
+
+        self.service_id = 'APP'
+        self.MAGIC_USERNAME_KEY = 'username_key'
+
+        self.access_key_id = ""
+        self.secret_access_key = ""
+            
+        username = keyring.get_password(self.service_id, self.MAGIC_USERNAME_KEY)
+        password = keyring.get_password(self.service_id, username)  
+        if username and password:
+            self.access_key_id = username
+            self.secret_access_key = password
+
         self.access_key_label = ctk.CTkLabel(self, text="Access Key ID:")
         self.access_key_label.pack(pady=(200, 5))
 
         self.access_key_entry = ctk.CTkEntry(self, width = 250)
         self.access_key_entry.pack()
+        self.access_key_entry.insert(0, self.access_key_id)
 
         self.secret_key_label = ctk.CTkLabel(self, text="Secret Access Key:")
         self.secret_key_label.pack()
 
         self.secret_access_key_entry = ctk.CTkEntry(self, show="*", width = 250)
         self.secret_access_key_entry.pack()
+        self.secret_access_key_entry.insert(0, self.secret_access_key)
+
+
+        self.remember_me_var = ctk.BooleanVar()
+        self.remember_me_checkbox = ctk.CTkCheckBox(self, text="Remember Me", variable=self.remember_me_var)
+        
+
+        self.config = configparser.ConfigParser()
+        self.config.read('app_config.ini')
+
+        remember_cred = self.config.getint('Settings', 'remember_cred')
+
+        if remember_cred == 1:
+            self.remember_me_checkbox.select()
+
+        self.remember_me_checkbox.pack(pady=10)
 
         self.submit_button = ctk.CTkButton(self, text="Submit", command = lambda: self.authenticate())
         self.submit_button.pack(padx=10, pady=20)
@@ -235,6 +268,23 @@ class KeyValidation(ctk.CTk, TkinterDnD.DnDWrapper):
         try:
             s3 = boto3.resource('s3', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
             list(s3.buckets.all())
+
+            if self.remember_me_var.get():
+                keyring.set_password(self.service_id, self.MAGIC_USERNAME_KEY, access_key_id)
+                keyring.set_password(self.service_id, access_key_id, secret_access_key)
+
+                self.config.set('Settings', 'remember_cred', '1')
+
+                with open('app_config.ini', 'w') as configfile:
+                    self.config.write(configfile)
+            else:
+                keyring.set_password(self.service_id, self.MAGIC_USERNAME_KEY, '')
+                keyring.set_password(self.service_id, access_key_id, '')
+
+                self.config.set('Settings', 'remember_cred', '0')
+
+                with open('app_config.ini', 'w') as configfile:
+                    self.config.write(configfile)
 
             self.open_dashboard(access_key_id, secret_access_key)
 
