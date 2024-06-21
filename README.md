@@ -1,6 +1,10 @@
 # AWS-File-Backup
  The Serverless File Backup project involves creating a system that automatically backs up files uploaded to an Amazon S3 bucket using AWS Lambda functions.
 
+![image](https://github.com/Steksu/AWS-File-Backup/assets/94147506/2d7681d9-baf4-4254-8138-8b001f5553dc)
+
+![image](https://github.com/Steksu/AWS-File-Backup/assets/94147506/6813128f-4352-4fbd-bef8-6ad4c5d76b04)
+
 
 # U need to change bucket name to your bucket
  Instead of mainbucket1 use your bucket name
